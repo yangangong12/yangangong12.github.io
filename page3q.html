@@ -1,0 +1,99 @@
+<!DOCTYPE html>  
+<html lang="en">  
+<head>  
+<meta charset="UTF-8">  
+<meta name="viewport" content="width=device-width, initial-scale=1.0">  
+<title>阳安文件系统</title>  
+<style>  
+  .iframe-container {  
+    width: 100%; /* 设置iframe容器的宽度 */  
+    height: 1000px; /* 设置iframe容器的高度 */  
+    border: 1px solid #ccc; /* 为容器添加边框 */  
+    margin: 10px; /* 为容器添加外边距 */  
+    overflow: hidden; /* 隐藏溢出的内容 */  
+  }  
+  .iframe-container iframe {  
+    width: 100%; /* 设置iframe的宽度为容器宽度 */  
+    height: 100%; /* 设置iframe的高度为容器高度 */  
+    border: none; /* 移除iframe的边框 */  
+  }  
+/* 清除默认的列表样式 */  
+ul {  
+    list-style-type: none;  
+    padding: 0;  
+    margin: 0;  
+    display: flex;  
+    justify-content: center; /* 水平居中 */  
+    align-items: center; /* 垂直居中（如果nav有高度的话）*/  
+    height: 50px; /* 可以根据你的需要调整 */  
+    background-color: #333; /* 背景色 */  
+}  
+  
+/* 链接样式 */  
+.nav-button {  
+    display: block;  
+    padding: 10px 20px; /* 内边距 */  
+    text-decoration: none; /* 去除下划线 */  
+    color: #fff; /* 文字颜色 */  
+    transition: background-color 0.3s ease; /* 背景色过渡效果 */  
+}  
+  
+/* 链接的鼠标悬停效果 */  
+.nav-button:hover {  
+    background-color: #666; /* 悬停时的背景色 */  
+}  
+  
+/* 如果你希望li之间有间隔，可以添加margin属性 */  
+li {  
+    margin: 0 10px; /* 左右外边距 */  
+}
+#backButton {  
+    padding: 10px 20px;  
+    background-color: #4CAF50; /* 绿色背景 */  
+    border: none;  
+    color: white;  
+    text-align: center;  
+    text-decoration: none;  
+    display: inline-block;  
+    font-size: 16px;  
+    margin: 4px 2px;  
+    cursor: pointer;  
+    transition: background-color 0.3s ease; /* 背景色过渡效果 */  
+}  
+  
+#backButton:hover {  
+    background-color: #45a049; /* 鼠标悬停时背景色变暗 */  
+}
+</style>
+<script>
+    document.getElementById('backButton').addEventListener('click', function() {  
+    window.history.back();  
+});
+</script>
+</head>  
+<body>  
+<body>  
+<button id="backButton">返回上一页</button>  
+    <header>  
+        <nav>  
+                <h1 align="center" color="#fff">填写</h1>
+                <br>  
+            <ul>  
+                <li><a href="page1.html" class="nav-button">书</a></li>  
+                <li><a href="page2.html" class="nav-button">阳吉</a></li>  
+                <li><a href="page3.html" class="nav-button">卷纸</a></li>  
+            </ul>
+                <h1 align="center" color="#fff">查询</h1>
+                <br>  
+            <ul>  
+                <li><a href="page1q.html" class="nav-button">书</a></li>  
+                <li><a href="page2q.html" class="nav-button">阳吉</a></li>  
+                <li><a href="page3q.html" class="nav-button">卷纸</a></li>  
+            </ul>
+        </nav>  
+    </header>  
+<div class="iframe-container">  
+  <iframe src="https://www.wjx.cn/resultquery.aspx?activity=271765733" title="Example 1"></iframe>  
+</div>  
+</body>  
+</html>
