@@ -6,8 +6,12 @@ $password = "oupypBSeolQEhDiU";
 $dbname = "yangan";
 
 // 文件目录配置
-$targetDir = "D:/图片/0529/"  // 修改为实际文件存放目录
+$targetDir = "D:/图片/0529/";
 $baseUrl = "https://photo-7bi.pages.dev/0529/";
+
+// 分页配置
+$perPage = 40; // 每页显示数量
+$page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
 
 // 创建数据库连接
 $conn = new mysqli($servername, $username, $password, $dbname);
@@ -15,26 +19,73 @@ if ($conn->connect_error) {
     die("数据库连接失败: " . $conn->connect_error);
 }
 
+// 获取数据库已有链接
+$existingLinks = [];
+$result = $conn->query("SELECT link FROM gzy");
+if ($result->num_rows > 0) {
+    while ($row = $result->fetch_assoc()) {
+        $existingLinks[] = $row['link'];
+    }
+}
+
+// 获取所有文件列表
+$allFiles = [];
+if ($handle = opendir($targetDir)) {
+    while (false !== ($entry = readdir($handle))) {
+        if ($entry != "." && $entry != "..") {
+            $fileLink = $baseUrl . $entry;
+            
+            // 过滤已存在的文件
+            if (!in_array($fileLink, $existingLinks)) {
+                $filePath = $targetDir . $entry;
+                $ext = strtolower(pathinfo($entry, PATHINFO_EXTENSION));
+                $type = 'file';
+                
+                $imageExt = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+                $videoExt = ['mp4', 'mov', 'avi', 'mkv', 'webm'];
+                
+                if (in_array($ext, $imageExt)) {
+                    $type = 'image';
+                } elseif (in_array($ext, $videoExt)) {
+                    $type = 'video';
+                }
+                
+                $allFiles[] = [
+                    'name' => pathinfo($entry, PATHINFO_FILENAME),
+                    'link' => $fileLink,
+                    'type' => $type,
+                    'file_time' => date('Y-m-d H:i:s', filemtime($filePath))
+                ];
+            }
+        }
+    }
+    closedir($handle);
+}
+
+// 分页处理
+$totalFiles = count($allFiles);
+$totalPages = ceil($totalFiles / $perPage);
+$page = min($page, $totalPages);
+$offset = ($page - 1) * $perPage;
+$files = array_slice($allFiles, $offset, $perPage);
+
 // 处理表单提交
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit'])) {
     $start = intval($_POST['start_row']);
     $end = intval($_POST['end_row']);
     $fileList = json_decode($_POST['file_list'], true);
-    $currentTime = date('Y-m-d H:i:s'); // 获取当前时间
+    $currentTime = date('Y-m-d H:i:s');
 
-    // 验证行数范围
     if ($start < 1 || $end > count($fileList) || $start > $end) {
         die("无效的行数范围");
     }
 
-    // 准备插入语句（包含created_at字段）
     $stmt = $conn->prepare("INSERT INTO gzy (name, link, type, created_at) VALUES (?, ?, ?, ?)");
     $count = 0;
 
     for ($i = $start - 1; $i < $end; $i++) {
         $file = $fileList[$i];
         
-        // 检查是否已存在
         $check = $conn->prepare("SELECT id FROM gzy WHERE link = ?");
         $check->bind_param("s", $file['link']);
         $check->execute();
@@ -48,42 +99,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit'])) {
         $check->close();
     }
 
-    echo "成功上传 {$count} 个文件";
+    echo "<script>alert('成功上传 {$count} 个文件'); window.location.href=window.location.href;</script>";
     exit;
-}
-
-// 获取文件列表
-$files = [];
-if ($handle = opendir($targetDir)) {
-    while (false !== ($entry = readdir($handle))) {
-        if ($entry != "." && $entry != "..") {
-            $filePath = $targetDir . $entry;
-            $type = 'file';
-            
-            // 判断文件类型
-            $ext = strtolower(pathinfo($entry, PATHINFO_EXTENSION));
-            $imageExt = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
-            $videoExt = ['mp4', 'mov', 'avi', 'mkv', 'webm'];
-            
-            if (in_array($ext, $imageExt)) {
-                $type = 'image';
-            } elseif (in_array($ext, $videoExt)) {
-                $type = 'video';
-            }
-            
-            // 获取文件修改时间作为参考时间
-            $fileTime = date('Y-m-d H:i:s', filemtime($filePath));
-            
-            $files[] = [
-                'name' => pathinfo($entry, PATHINFO_FILENAME),
-                // 正确写法（只拼接文件名）
-'link' => $baseUrl . $entry, // $entry是文件名
-                'type' => $type,
-                'file_time' => $fileTime  // 用于显示，实际使用当前时间
-            ];
-        }
-    }
-    closedir($handle);
 }
 ?>
 
@@ -99,7 +116,6 @@ if ($handle = opendir($targetDir)) {
             background: #f8f9fa;
             padding: 2rem;
         }
-
         .container {
             max-width: 1200px;
             margin: 0 auto;
@@ -108,29 +124,24 @@ if ($handle = opendir($targetDir)) {
             box-shadow: 0 2px 15px rgba(0,0,0,0.1);
             padding: 2rem;
         }
-
         table {
             width: 100%;
             border-collapse: collapse;
             margin: 1rem 0;
         }
-
         th, td {
             padding: 12px;
             text-align: left;
             border-bottom: 1px solid #ddd;
         }
-
         th {
             background: #f8f9fa;
         }
-
         .preview-cell img, .preview-cell video {
             max-width: 150px;
             max-height: 100px;
             object-fit: contain;
         }
-
         .controls {
             display: flex;
             gap: 1rem;
@@ -138,20 +149,17 @@ if ($handle = opendir($targetDir)) {
             align-items: center;
             flex-wrap: wrap;
         }
-
         .control-group {
             display: flex;
             align-items: center;
             gap: 0.5rem;
         }
-
         input[type="number"] {
             padding: 8px;
             width: 80px;
             border: 1px solid #ddd;
             border-radius: 4px;
         }
-
         button {
             padding: 10px 20px;
             background: #007bff;
@@ -161,28 +169,53 @@ if ($handle = opendir($targetDir)) {
             cursor: pointer;
             transition: background 0.2s;
         }
-
         button:hover {
             background: #0056b3;
         }
-
-        .time-options {
-            margin-top: 1rem;
-            padding: 1rem;
-            background: #f8f9fa;
-            border-radius: 4px;
+        .pagination {
+            margin: 20px 0;
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
         }
-
-        .time-option {
-            margin: 0.5rem 0;
+        .page-item {
+            padding: 5px 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            text-decoration: none;
+            color: #333;
+        }
+        .page-item.active {
+            background: #007bff;
+            color: white;
+            border-color: #007bff;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>批量文件上传</h1>
-        <p>共发现 <?php echo count($files); ?> 个文件</p>
+        <p>共发现 <?php echo $totalFiles; ?> 个文件（当前显示 <?php echo count($files); ?> 个）</p>
         
+        <!-- 分页导航 -->
+        <div class="pagination">
+            <?php if ($totalPages > 1): ?>
+                <?php if ($page > 1): ?>
+                    <a href="?page=<?php echo $page - 1; ?>" class="page-item">上一页</a>
+                <?php endif; ?>
+
+                <?php for ($i = max(1, $page - 2); $i <= min($page + 2, $totalPages); $i++): ?>
+                    <a href="?page=<?php echo $i; ?>" class="page-item <?php echo $i == $page ? 'active' : ''; ?>">
+                        <?php echo $i; ?>
+                    </a>
+                <?php endfor; ?>
+
+                <?php if ($page < $totalPages): ?>
+                    <a href="?page=<?php echo $page + 1; ?>" class="page-item">下一页</a>
+                <?php endif; ?>
+            <?php endif; ?>
+        </div>
+
         <form method="post">
             <table>
                 <thead>
@@ -206,7 +239,7 @@ if ($handle = opendir($targetDir)) {
                             <?php if ($file['type'] === 'image'): ?>
                                 <img src="<?php echo $file['link']; ?>" alt="预览">
                             <?php elseif ($file['type'] === 'video'): ?>
-                                <video controls>
+                                <video controls muted playsinline>
                                     <source src="<?php echo $file['link']; ?>" type="video/mp4">
                                 </video>
                             <?php else: ?>
@@ -218,18 +251,6 @@ if ($handle = opendir($targetDir)) {
                     <?php endforeach; ?>
                 </tbody>
             </table>
-
-            <div class="time-options">
-                <h3>时间设置</h3>
-                <div class="time-option">
-                    <input type="radio" id="time_current" name="time_option" value="current" checked>
-                    <label for="time_current">使用当前时间 (<?php echo date('Y-m-d H:i:s'); ?>)</label>
-                </div>
-                <div class="time-option">
-                    <input type="radio" id="time_file" name="time_option" value="file">
-                    <label for="time_file">使用文件修改时间</label>
-                </div>
-            </div>
 
             <div class="controls">
                 <div class="control-group">
@@ -245,15 +266,46 @@ if ($handle = opendir($targetDir)) {
 
             <input type="hidden" name="file_list" value="<?php echo htmlspecialchars(json_encode($files)); ?>">
         </form>
+
+        <!-- 底部分页导航 -->
+        <div class="pagination">
+            <?php if ($totalPages > 1): ?>
+                <?php if ($page > 1): ?>
+                    <a href="?page=<?php echo $page - 1; ?>" class="page-item">上一页</a>
+                <?php endif; ?>
+
+                <?php for ($i = max(1, $page - 2); $i <= min($page + 2, $totalPages); $i++): ?>
+                    <a href="?page=<?php echo $i; ?>" class="page-item <?php echo $i == $page ? 'active' : ''; ?>">
+                        <?php echo $i; ?>
+                    </a>
+                <?php endfor; ?>
+
+                <?php if ($page < $totalPages): ?>
+                    <a href="?page=<?php echo $page + 1; ?>" class="page-item">下一页</a>
+                <?php endif; ?>
+            <?php endif; ?>
+        </div>
     </div>
 
     <script>
-        // 可以添加JavaScript来增强交互性
+        // 自动设置行号范围
         document.addEventListener('DOMContentLoaded', function() {
-            // 示例：自动设置结束行号为最大值
-            const endRowInput = document.querySelector('input[name="end_row"]');
-            if (endRowInput) {
-                endRowInput.value = endRowInput.max;
+            const startInput = document.querySelector('input[name="start_row"]');
+            const endInput = document.querySelector('input[name="end_row"]');
+            const maxValue = <?php echo count($files); ?>;
+
+            if (startInput && endInput) {
+                startInput.max = maxValue;
+                endInput.max = maxValue;
+                endInput.value = maxValue;
+
+                startInput.addEventListener('change', function() {
+                    endInput.min = this.value;
+                });
+
+                endInput.addEventListener('change', function() {
+                    startInput.max = this.value;
+                });
             }
         });
     </script>
