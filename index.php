@@ -6,12 +6,8 @@ $password = "oupypBSeolQEhDiU";
 $dbname = "yangan";
 
 // 文件目录配置
-$targetDir = "D:/图片/0529/";
-$baseUrl = "https://photo-7bi.pages.dev/0529/";
-
-// 分页配置
-$perPage = 40; // 每页显示数量
-$page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
+$targetDir = "G:/图片/0529/大课间跳绳视频/";
+$baseUrl = "https://photo-7bi.pages.dev/0529/大课间跳绳视频/";
 
 // 创建数据库连接
 $conn = new mysqli($servername, $username, $password, $dbname);
@@ -29,7 +25,7 @@ if ($result->num_rows > 0) {
 }
 
 // 获取所有文件列表
-$allFiles = [];
+$files = [];
 if ($handle = opendir($targetDir)) {
     while (false !== ($entry = readdir($handle))) {
         if ($entry != "." && $entry != "..") {
@@ -50,7 +46,7 @@ if ($handle = opendir($targetDir)) {
                     $type = 'video';
                 }
                 
-                $allFiles[] = [
+                $files[] = [
                     'name' => pathinfo($entry, PATHINFO_FILENAME),
                     'link' => $fileLink,
                     'type' => $type,
@@ -61,13 +57,6 @@ if ($handle = opendir($targetDir)) {
     }
     closedir($handle);
 }
-
-// 分页处理
-$totalFiles = count($allFiles);
-$totalPages = ceil($totalFiles / $perPage);
-$page = min($page, $totalPages);
-$offset = ($page - 1) * $perPage;
-$files = array_slice($allFiles, $offset, $perPage);
 
 // 处理表单提交
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit'])) {
@@ -172,50 +161,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit'])) {
         button:hover {
             background: #0056b3;
         }
-        .pagination {
-            margin: 20px 0;
-            display: flex;
-            gap: 5px;
-            flex-wrap: wrap;
-        }
-        .page-item {
-            padding: 5px 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            text-decoration: none;
-            color: #333;
-        }
-        .page-item.active {
-            background: #007bff;
-            color: white;
-            border-color: #007bff;
-        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>批量文件上传</h1>
-        <p>共发现 <?php echo $totalFiles; ?> 个文件（当前显示 <?php echo count($files); ?> 个）</p>
+        <p>共发现 <?php echo count($files); ?> 个文件</p>
         
-        <!-- 分页导航 -->
-        <div class="pagination">
-            <?php if ($totalPages > 1): ?>
-                <?php if ($page > 1): ?>
-                    <a href="?page=<?php echo $page - 1; ?>" class="page-item">上一页</a>
-                <?php endif; ?>
-
-                <?php for ($i = max(1, $page - 2); $i <= min($page + 2, $totalPages); $i++): ?>
-                    <a href="?page=<?php echo $i; ?>" class="page-item <?php echo $i == $page ? 'active' : ''; ?>">
-                        <?php echo $i; ?>
-                    </a>
-                <?php endfor; ?>
-
-                <?php if ($page < $totalPages): ?>
-                    <a href="?page=<?php echo $page + 1; ?>" class="page-item">下一页</a>
-                <?php endif; ?>
-            <?php endif; ?>
-        </div>
-
         <form method="post">
             <table>
                 <thead>
@@ -266,25 +218,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit'])) {
 
             <input type="hidden" name="file_list" value="<?php echo htmlspecialchars(json_encode($files)); ?>">
         </form>
-
-        <!-- 底部分页导航 -->
-        <div class="pagination">
-            <?php if ($totalPages > 1): ?>
-                <?php if ($page > 1): ?>
-                    <a href="?page=<?php echo $page - 1; ?>" class="page-item">上一页</a>
-                <?php endif; ?>
-
-                <?php for ($i = max(1, $page - 2); $i <= min($page + 2, $totalPages); $i++): ?>
-                    <a href="?page=<?php echo $i; ?>" class="page-item <?php echo $i == $page ? 'active' : ''; ?>">
-                        <?php echo $i; ?>
-                    </a>
-                <?php endfor; ?>
-
-                <?php if ($page < $totalPages): ?>
-                    <a href="?page=<?php echo $page + 1; ?>" class="page-item">下一页</a>
-                <?php endif; ?>
-            <?php endif; ?>
-        </div>
     </div>
 
     <script>
