@@ -6,8 +6,8 @@ $password = "oupypBSeolQEhDiU";
 $dbname = "yangan";
 
 // 文件目录配置
-$targetDir = "G:/图片/0529/大课间跳绳视频/";
-$baseUrl = "https://photo-7bi.pages.dev/0529/大课间跳绳视频/";
+$targetDir = "D:/图片/0529/";
+$baseUrl = "https://photo-7bi.pages.dev/0529/";
 
 // 创建数据库连接
 $conn = new mysqli($servername, $username, $password, $dbname);
